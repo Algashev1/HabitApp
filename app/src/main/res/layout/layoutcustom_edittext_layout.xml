@@ -16,7 +16,7 @@
 
     <TextView
         android:id="@+id/name"
-        android:layout_width="wrap_content"
+        android:layout_width="200sp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_marginLeft="15dp"
@@ -25,40 +25,103 @@
         android:textColor="@android:color/white"
         android:textSize="18sp" />
 
-    <RadioButton
-        android:id="@+id/radioButton1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="25sp"
+        android:layout_height="25sp"
+        android:paddingHorizontal="3sp"
         android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/name"
-        android:layout_marginRight="140dp" />
+        android:layout_marginRight="140dp"
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/init" />
 
-    <RadioButton
-        android:id="@+id/radioButton2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="25sp"
+        android:layout_height="25sp"
+        android:paddingHorizontal="3sp"
         android:layout_alignTop="@+id/name"
-        android:layout_marginLeft="-140dp"
-        android:layout_toRightOf="@+id/radioButton1" />
+        android:layout_marginLeft="-133dp"
+        android:layout_marginRight="7dp"
+        android:layout_toRightOf="@+id/imageView1"
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/init" />
 
-    <RadioButton
-        android:id="@+id/radioButton3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="25sp"
+        android:layout_height="25sp"
+        android:paddingHorizontal="3sp"
+        android:layout_marginRight="7dp"
         android:layout_alignTop="@+id/name"
-        android:layout_toRightOf="@+id/radioButton2" />
+        android:layout_toRightOf="@+id/imageView2"
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/init" />
 
-    <RadioButton
-        android:id="@+id/radioButton4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/imageView4"
+        android:layout_width="25sp"
+        android:layout_height="25sp"
+        android:paddingHorizontal="3sp"
+        android:layout_marginRight="7dp"
         android:layout_alignTop="@+id/name"
-        android:layout_toRightOf="@+id/radioButton3" />
+        android:layout_toRightOf="@+id/imageView3"
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/init" />
 
-    <RadioButton
-        android:id="@+id/radioButton5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="25sp"
+        android:layout_height="25sp"
+        android:paddingHorizontal="3sp"
+        android:layout_marginRight="7dp"
         android:layout_alignTop="@+id/name"
-        android:layout_toRightOf="@+id/radioButton4" />
+        android:layout_toRightOf="@+id/imageView4"
+        android:contentDescription="TODO"
+        app:srcCompat="@drawable/init" />
+
+    <!--<RadioButton-->
+        <!--android:id="@+id/radioButton1"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentRight="true"-->
+        <!--android:layout_alignTop="@+id/name"-->
+        <!--android:layout_marginRight="140dp"-->
+        <!--android:theme="@style/MyRadioButton" />-->
+
+
+
+    <!--<RadioButton-->
+        <!--android:id="@+id/radioButton2"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignTop="@+id/name"-->
+        <!--android:layout_marginLeft="-140dp"-->
+        <!--android:layout_toRightOf="@+id/radioButton1"-->
+        <!--android:theme="@style/MyRadioButton"/>-->
+
+    <!--<RadioButton-->
+        <!--android:id="@+id/radioButton3"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignTop="@+id/name"-->
+        <!--android:layout_toRightOf="@+id/radioButton2"-->
+        <!--android:theme="@style/MyRadioButton"/>-->
+
+    <!--<RadioButton-->
+        <!--android:id="@+id/radioButton4"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignTop="@+id/name"-->
+        <!--android:layout_toRightOf="@+id/radioButton3"-->
+        <!--android:theme="@style/MyRadioButton"/>-->
+
+    <!--<RadioButton-->
+        <!--android:id="@+id/radioButton5"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignTop="@+id/name"-->
+        <!--android:layout_toRightOf="@+id/radioButton4"-->
+        <!--android:theme="@style/MyRadioButton"/>-->
 </RelativeLayout>

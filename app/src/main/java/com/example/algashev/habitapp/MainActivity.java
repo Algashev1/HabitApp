@@ -2,6 +2,7 @@ package com.example.algashev.habitapp;
 
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -12,11 +13,12 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -27,13 +29,15 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout linear;
 
-    TextView text1, text2, text3, text4, text5;
+    TextView text1, text2, text3, text4, text5, num1, num2, num3, num4, num5;
 
     private String[] habits = { "Подтягивание",  "Бег",  "Приём витаминов"};
 
     private String[] days = { "Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
 
-    private TextView[] texts;
+    private Calendar currentDate, date, newDate;
+
+    private TextView[] texts, nums;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -43,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
         linear = findViewById(R.id.linear);
         allEds = new ArrayList<>();
+
         text1 = findViewById(R.id.text1);
         text2 = findViewById(R.id.text2);
         text3 = findViewById(R.id.text3);
@@ -50,12 +55,16 @@ public class MainActivity extends AppCompatActivity {
         text5 = findViewById(R.id.text5);
         texts = new TextView[]{ text1, text2, text3, text4, text5 };
 
+        num1 = findViewById(R.id.num1);
+        num2 = findViewById(R.id.num2);
+        num3 = findViewById(R.id.num3);
+        num4 = findViewById(R.id.num4);
+        num5 = findViewById(R.id.num5);
+        nums = new TextView[]{ num1, num2, num3, num4, num5 };
+
         init();
         initDays();
         addHabit();
-
-
-
 
         final GestureDetector gdt = new GestureDetector(new GestureListener());
         final LinearLayout layout  = findViewById(R.id.date);
@@ -73,8 +82,73 @@ public class MainActivity extends AppCompatActivity {
             final View viewHabit = getLayoutInflater().inflate(R.layout.layoutcustom_edittext_layout, null);
             TextView name = viewHabit.findViewById(R.id.name);
             name.setText(nameHabits);
+            name.setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(".EditActivity");
+                            startActivity(intent);
+                        }
+                    }
+            );
+
+
+            initImages(viewHabit);
             allEds.add(viewHabit);
             linear.addView(viewHabit);
+        }
+    }
+
+    private void initDays() {
+
+        currentDate = Calendar.getInstance();
+        currentDate.setTime(new Date());
+
+        date = (Calendar) currentDate.clone();
+        newDate = (Calendar) currentDate.clone();
+
+        currentDate.add(Calendar.DATE, 1);
+
+        for (int i = 0; i < texts.length; i++) {
+            texts[i].setText(days[newDate.get(Calendar.DAY_OF_WEEK) - 1]);
+            nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
+            newDate.add(Calendar.DATE, -1);
+        }
+    }
+
+    private void initImages(View viewHabit) {
+        ImageView[] images = {
+                viewHabit.findViewById(R.id.imageView1),
+                viewHabit.findViewById(R.id.imageView2),
+                viewHabit.findViewById(R.id.imageView3),
+                viewHabit.findViewById(R.id.imageView4),
+                viewHabit.findViewById(R.id.imageView5)};
+
+
+        for (final ImageView img: images) {
+            img.setOnLongClickListener(
+                    new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            System.out.println();
+                            img.setImageResource(R.drawable.good);
+                            return true;
+                        }
+                    }
+            );
+
+            img.setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(
+                                    MainActivity.this,
+                                    "Нажмите и удерживайте, чтобы установить или снять галочку",
+                                    Toast.LENGTH_LONG
+                            ).show();
+                        }
+                    }
+            );
         }
     }
 
@@ -94,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
                                 TextView name = viewHabit.findViewById(R.id.name);
                                 EditText newName = addView.findViewById(R.id.habitNewName);
                                 name.setText(newName.getText());
+                                initImages(viewHabit);
                                 allEds.add(viewHabit);
                                 linear.addView(viewHabit);
                             }
@@ -112,13 +187,35 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void updateDaysAdd() {
+        date.add(Calendar.DATE, -1);
+        newDate = (Calendar)date.clone();
+        for (int i = 0; i < nums.length; i++) {
+            texts[i].setText(days[newDate.get(Calendar.DAY_OF_WEEK) - 1]);
+            nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
+            newDate.add(Calendar.DATE, -1);
+        }
+    }
 
-
-
-    private static final int SWIPE_MIN_DISTANCE = 120;
-    private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+    private void updateDaysSub() {
+        date.add(Calendar.DATE, 1);
+        if (date.before(currentDate)) {
+            newDate = (Calendar)date.clone();
+            for (int i = 0; i < nums.length; i++) {
+                texts[i].setText(days[newDate.get(Calendar.DAY_OF_WEEK) - 1]);
+                nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
+                newDate.add(Calendar.DATE, -1);
+            }
+        }
+        else {
+            date.add(Calendar.DATE, -1);
+        }
+    }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+        private static final int SWIPE_MIN_DISTANCE = 120;
+        private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
@@ -133,52 +230,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initDays() {
-        Calendar c = Calendar.getInstance();
-        c.setTime(new Date());
-        int index = c.get(Calendar.DAY_OF_WEEK) - 1;
-        int number = 0;
 
-        for (int i = index; i < days.length && number < 5; i++) {
-            texts[number].setText(days[i]);
-            number++;
-        }
-
-        for (int i = 0; i < index && number < 5; i++) {
-            texts[number].setText(days[i]);
-            number++;
-        }
-    }
-
-    private void updateDaysAdd() {
-        int index = Arrays.asList(days).indexOf(text1.getText());
-        int number = 0;
-
-        for (int i = index + 1; i < days.length && number < 5; i++) {
-            texts[number].setText(days[i]);
-            number++;
-        }
-
-        for (int i = 0; i < index && number < 5; i++) {
-            texts[number].setText(days[i]);
-            number++;
-        }
-    }
-
-    private void updateDaysSub() {
-        int index = Arrays.asList(days).indexOf(text5.getText());
-        int number = 4;
-
-        for (int i = index - 1; i >= 0 && number >= 0 ; i--) {
-            texts[number].setText(days[i]);
-            number--;
-        }
-
-        for (int i = days.length - 1; i > index && number >= 0; i--) {
-            texts[number].setText(days[i]);
-            number--;
-        }
-    }
 
 
 
