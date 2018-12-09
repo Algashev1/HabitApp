@@ -3,20 +3,28 @@ package com.example.algashev.habitapp;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.algashev.habitapp.rest.Habit;
+
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     TextView text1, text2, text3, text4, text5, num1, num2, num3, num4, num5;
 
-    private String[] habits = { "Подтягивание",  "Бег",  "Приём витаминов"};
+    List<Habit> habits;
 
     private String[] days = { "Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
 
@@ -44,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        new HabitsTask().execute();
 
         linear = findViewById(R.id.linear);
         allEds = new ArrayList<>();
@@ -62,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
         num5 = findViewById(R.id.num5);
         nums = new TextView[]{ num1, num2, num3, num4, num5 };
 
-        init();
         initDays();
         addHabit();
 
@@ -78,22 +87,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void init() {
-        for (String nameHabits: habits) {
+        linear.removeAllViews();
+        for (final Habit item: habits) {
             final View viewHabit = getLayoutInflater().inflate(R.layout.layoutcustom_edittext_layout, null);
             TextView name = viewHabit.findViewById(R.id.name);
-            name.setText(nameHabits);
+            name.setText(item.getName());
             name.setOnClickListener(
                     new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             Intent intent = new Intent(".EditActivity");
+                            intent.putExtra("id_habit", item.getId());
+                            intent.putExtra("name_habit", item.getName());
+                            intent.putExtra("question_habit", item.getQuestion());
                             startActivity(intent);
                         }
                     }
             );
 
-
-            initImages(viewHabit);
+            initImages(viewHabit, item.getId());
             allEds.add(viewHabit);
             linear.addView(viewHabit);
         }
@@ -116,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initImages(View viewHabit) {
+    private void initImages(View viewHabit, final int id) {
         ImageView[] images = {
                 viewHabit.findViewById(R.id.imageView1),
                 viewHabit.findViewById(R.id.imageView2),
@@ -124,14 +136,17 @@ public class MainActivity extends AppCompatActivity {
                 viewHabit.findViewById(R.id.imageView4),
                 viewHabit.findViewById(R.id.imageView5)};
 
-
+        int i = 0;
         for (final ImageView img: images) {
+            final int finalI = i;
+            i++;
             img.setOnLongClickListener(
                     new View.OnLongClickListener() {
                         @Override
                         public boolean onLongClick(View v) {
                             System.out.println();
                             img.setImageResource(R.drawable.good);
+                            new AddMarkTask().execute(id, finalI);
                             return true;
                         }
                     }
@@ -152,6 +167,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    void checkImage(ImageView[] images, int id) {
+
+    }
+
     public void addHabit() {
         FloatingActionButton addButton = findViewById(R.id.fab);
         addButton.setOnClickListener(new View.OnClickListener() {
@@ -164,13 +183,12 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick (DialogInterface dialog, int which) {
-                                final View viewHabit = getLayoutInflater().inflate(R.layout.layoutcustom_edittext_layout, null);
-                                TextView name = viewHabit.findViewById(R.id.name);
                                 EditText newName = addView.findViewById(R.id.habitNewName);
-                                name.setText(newName.getText());
-                                initImages(viewHabit);
-                                allEds.add(viewHabit);
-                                linear.addView(viewHabit);
+                                EditText newQuestion = addView.findViewById(R.id.habitNewQuestion);
+                                if (!newName.getText().toString().equals("")) {
+                                    AddHabitTask a = new AddHabitTask();
+                                    a.execute(newName.getText().toString(), newQuestion.getText().toString());
+                                }
                             }
                         })
                         .setNegativeButton("Отменить", new DialogInterface.OnClickListener() {
@@ -230,12 +248,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
-
-
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -257,4 +269,99 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    private class HabitsTask extends AsyncTask<Void, Void, List<Habit>> {
+        @Override
+        protected List<Habit> doInBackground(Void... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://192.168.1.3:8080/habits";
+                ResponseEntity<List<Habit>> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                habits = habitResponse.getBody();
+                return habits;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(List<Habit> habits) {
+            init();
+        }
+    }
+
+    private class AddHabitTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://192.168.1.3:8080/addHabit?name="
+                        + params[0] + "&question=" + params[1];
+                restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Habit>>() {});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void task) {
+            new HabitsTask().execute();
+        }
+    }
+
+    private class AddMarkTask extends AsyncTask<Integer, Void, Void> {
+        @Override
+        protected Void doInBackground(Integer... params) {
+            try {
+                Calendar d = (Calendar)date.clone();
+                d.add(Calendar.DATE, -params[1]);
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://192.168.1.3:8080/addMark?id="
+                        + params[0] + "&year=" + d.get(Calendar.YEAR) + "&month=" + d.get(Calendar.MONTH)
+                        + "&day=" + d.get(Calendar.DATE);
+                restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Habit>>() {});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void task) {
+
+        }
+    }
+
+
+
+
+//    private class CheckTask extends AsyncTask<Integer, Void, boolean[]> {
+//        @Override
+//        protected boolean[] doInBackground(Integer... params) {
+//            try {
+//                RestTemplate restTemplate = new RestTemplate();
+//                final String url = "http://192.168.1.3:8080/marks?year="+ date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH) +
+//                        "&day=" + date.get(Calendar.DATE) + "&id=" + params;
+//                ResponseEntity<boolean[]> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
+//                        null, new ParameterizedTypeReference<boolean[]>() {});
+//                boolean[] result = habitResponse.getBody();
+//                return result;
+//            } catch (Exception e) {
+//                Log.e("MainActivity", e.getMessage(), e);
+//            }
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(boolean[] greeting) {
+//        }
+//    }
 }
