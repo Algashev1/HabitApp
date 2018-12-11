@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.algashev.habitapp.rest.Habit;
+import com.example.algashev.habitapp.rest.Mark;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     List<Habit> habits;
 
+    List<Mark> marks;
+
     private String[] days = { "Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
 
     private Calendar currentDate, date, newDate;
@@ -53,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        new HabitsTask().execute();
+        new MarksTask().execute();
 
         linear = findViewById(R.id.linear);
         allEds = new ArrayList<>();
@@ -129,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initImages(View viewHabit, final int id) {
-        ImageView[] images = {
+        final ImageView[] images = {
                 viewHabit.findViewById(R.id.imageView1),
                 viewHabit.findViewById(R.id.imageView2),
                 viewHabit.findViewById(R.id.imageView3),
@@ -138,15 +141,39 @@ public class MainActivity extends AppCompatActivity {
 
         int i = 0;
         for (final ImageView img: images) {
+            Calendar c = (Calendar)date.clone();
+            c.add(Calendar.DATE, -i);
+            boolean flag = false;
+            int idMark =  -1;
+            for (int j = 0; j < marks.size(); j++) {
+                if (marks.get(j).getIdHabit() == id && marks.get(j).check(c)) {
+                    img.setImageResource(R.drawable.good);
+                    flag = true;
+                    idMark = marks.get(j).getId();
+                    break;
+                } else if (i > 0)
+                    img.setImageResource(R.drawable.init);
+
+
+            }
+
             final int finalI = i;
+            final boolean finalFlag = flag;
+            final int finalIdMark = idMark;
             i++;
             img.setOnLongClickListener(
                     new View.OnLongClickListener() {
+                        boolean status = finalFlag;
+                        int idMark = finalIdMark;
                         @Override
                         public boolean onLongClick(View v) {
-                            System.out.println();
-                            img.setImageResource(R.drawable.good);
-                            new AddMarkTask().execute(id, finalI);
+                            if (!status) {
+                                new AddMarkTask().execute(id, finalI);
+                            }
+                            else {
+                                new DeleteMarkTask().execute(idMark);
+                            }
+
                             return true;
                         }
                     }
@@ -213,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
             nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
             newDate.add(Calendar.DATE, -1);
         }
+        new MarksTask().execute();
     }
 
     private void updateDaysSub() {
@@ -228,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
         else {
             date.add(Calendar.DATE, -1);
         }
+        new MarksTask().execute();
     }
 
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -278,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
         protected List<Habit> doInBackground(Void... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.3:8080/habits";
+                final String url = "http://192.168.1.10:8080/habits";
                 ResponseEntity<List<Habit>> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Habit>>() {});
                 habits = habitResponse.getBody();
@@ -300,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(String... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.3:8080/addHabit?name="
+                final String url = "http://192.168.1.10:8080/addHabit?name="
                         + params[0] + "&question=" + params[1];
                 restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Habit>>() {});
@@ -323,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                 Calendar d = (Calendar)date.clone();
                 d.add(Calendar.DATE, -params[1]);
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.3:8080/addMark?id="
+                final String url = "http://192.168.1.10:8080/addMark?id="
                         + params[0] + "&year=" + d.get(Calendar.YEAR) + "&month=" + d.get(Calendar.MONTH)
                         + "&day=" + d.get(Calendar.DATE);
                 restTemplate.exchange(url, HttpMethod.GET,
@@ -336,32 +365,50 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void task) {
-
+            new MarksTask().execute();
         }
     }
 
+    private class MarksTask extends AsyncTask<Void, Void, List<Mark>> {
+        @Override
+        protected List<Mark> doInBackground(Void... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://192.168.1.10:8080/marks?year=" + date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH)
+                        + "&day=" + date.get(Calendar.DATE);
+                ResponseEntity<List<Mark>> markResponse = restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Mark>>() {});
+                marks = markResponse.getBody();
+                return marks;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 
+        @Override
+        protected void onPostExecute(List<Mark> marks) {
+            new HabitsTask().execute();
+        }
+    }
 
+    private class DeleteMarkTask extends AsyncTask<Integer, Void, Void> {
+        @Override
+        protected Void doInBackground(Integer... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://192.168.1.10:8080/deleteMark?id=" + params[0];
+                restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Habit>>() {});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
 
-//    private class CheckTask extends AsyncTask<Integer, Void, boolean[]> {
-//        @Override
-//        protected boolean[] doInBackground(Integer... params) {
-//            try {
-//                RestTemplate restTemplate = new RestTemplate();
-//                final String url = "http://192.168.1.3:8080/marks?year="+ date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH) +
-//                        "&day=" + date.get(Calendar.DATE) + "&id=" + params;
-//                ResponseEntity<boolean[]> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
-//                        null, new ParameterizedTypeReference<boolean[]>() {});
-//                boolean[] result = habitResponse.getBody();
-//                return result;
-//            } catch (Exception e) {
-//                Log.e("MainActivity", e.getMessage(), e);
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(boolean[] greeting) {
-//        }
-//    }
+        @Override
+        protected void onPostExecute(Void task) {
+            new MarksTask().execute();
+        }
+    }
 }
