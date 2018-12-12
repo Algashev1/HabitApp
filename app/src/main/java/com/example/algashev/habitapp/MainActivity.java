@@ -34,6 +34,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static String ip = "192.168.1.2";
+
     private List<View> allEds;
 
     private LinearLayout linear;
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("id_habit", item.getId());
                             intent.putExtra("name_habit", item.getName());
                             intent.putExtra("question_habit", item.getQuestion());
+                            intent.putExtra("time_habit", item.getTime());
                             startActivity(intent);
                         }
                     }
@@ -192,10 +195,6 @@ public class MainActivity extends AppCompatActivity {
                     }
             );
         }
-    }
-
-    void checkImage(ImageView[] images, int id) {
-
     }
 
     public void addHabit() {
@@ -307,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
         protected List<Habit> doInBackground(Void... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.10:8080/habits";
+                final String url = "http://" + ip + ":8080/habits";
                 ResponseEntity<List<Habit>> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Habit>>() {});
                 habits = habitResponse.getBody();
@@ -329,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(String... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.10:8080/addHabit?name="
+                final String url = "http://" + ip + ":8080/addHabit?name="
                         + params[0] + "&question=" + params[1];
                 restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Habit>>() {});
@@ -352,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
                 Calendar d = (Calendar)date.clone();
                 d.add(Calendar.DATE, -params[1]);
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.10:8080/addMark?id="
+                final String url = "http://" + ip + ":8080/addMark?id="
                         + params[0] + "&year=" + d.get(Calendar.YEAR) + "&month=" + d.get(Calendar.MONTH)
                         + "&day=" + d.get(Calendar.DATE);
                 restTemplate.exchange(url, HttpMethod.GET,
@@ -374,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
         protected List<Mark> doInBackground(Void... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.10:8080/marks?year=" + date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH)
+                final String url = "http://" + ip + ":8080/marks?year=" + date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH)
                         + "&day=" + date.get(Calendar.DATE);
                 ResponseEntity<List<Mark>> markResponse = restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Mark>>() {});
@@ -397,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Integer... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.10:8080/deleteMark?id=" + params[0];
+                final String url = "http://" + ip + ":8080/deleteMark?id=" + params[0];
                 restTemplate.exchange(url, HttpMethod.GET,
                         null, new ParameterizedTypeReference<List<Habit>>() {});
             } catch (Exception e) {

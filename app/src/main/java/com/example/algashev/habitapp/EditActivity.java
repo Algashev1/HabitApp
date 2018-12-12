@@ -1,5 +1,6 @@
 package com.example.algashev.habitapp;
 
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -10,22 +11,30 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import com.example.algashev.habitapp.rest.Habit;
+import com.example.algashev.habitapp.rest.Mark;
+import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class EditActivity extends AppCompatActivity {
 
     int id_habit;
-    String name_habit, question_habit;
+    String name_habit, question_habit, time_habit;
 
-    TextView name;
+    List<Mark> marks;
+
+    TextView name, time;
     ImageView delete, edit;
+    MaterialCalendarView calendarView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +45,7 @@ public class EditActivity extends AppCompatActivity {
         id_habit = (int) arguments.get("id_habit");
         name_habit = arguments.get("name_habit").toString();
         question_habit = arguments.get("question_habit").toString();
+        time_habit = arguments.get("time_habit").toString();
 
         name = findViewById(R.id.name);
         name.setText(name_habit);
@@ -48,7 +58,7 @@ public class EditActivity extends AppCompatActivity {
                 a_builder.setCancelable(false)
                         .setPositiveButton("Удалить", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick (DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialog, int which) {
                                 new DeleteHabitTask().execute();
                             }
                         })
@@ -80,12 +90,12 @@ public class EditActivity extends AppCompatActivity {
                 a_builder.setCancelable(false)
                         .setPositiveButton("Сохранить", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick (DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialog, int which) {
                                 EditText newName = addView.findViewById(R.id.habitNewName);
                                 EditText newQuestion = addView.findViewById(R.id.habitNewQuestion);
                                 if (!newName.getText().toString().equals("")) {
                                     new UpdateHabitTask().execute(newName.getText().toString(),
-                                            newQuestion.getText().toString());
+                                            newQuestion.getText().toString(), time.getText().toString());
                                 }
                             }
                         })
@@ -101,12 +111,42 @@ public class EditActivity extends AppCompatActivity {
                 alert.show();
             }
         });
+
+        new MarksTask().execute();
+
+        time = findViewById(R.id.time);
+        time.setText(time_habit);
+        time.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        callTimePicker();
+                    }
+                }
+        );
+    }
+
+    private void callTimePicker() {
+        final Calendar cal = Calendar.getInstance();
+        int mHour = cal.get(Calendar.HOUR_OF_DAY);
+        int mMinute = cal.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        String editTextTimeParam = hourOfDay + ":" + minute;
+                        time.setText(editTextTimeParam);
+                        new UpdateTimeHabitTask().execute(editTextTimeParam);
+                    }
+                }, mHour, mMinute, false);
+        timePickerDialog.show();
     }
 
     @Override
     public void onBackPressed() {
         // super.onBackPressed();
-        Intent intent = new Intent(EditActivity.this, MainActivity.class );
+        Intent intent = new Intent(EditActivity.this, MainActivity.class);
         startActivity(intent);
     }
 
@@ -115,9 +155,10 @@ public class EditActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             try {
                 RestTemplate restTemplate = new RestTemplate();
-                final String url = "http://192.168.1.3:8080/deleteHabit?id=" + id_habit;
+                final String url = "http://" + MainActivity.ip + ":8080/deleteHabit?id=" + id_habit;
                 restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -126,7 +167,7 @@ public class EditActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void task) {
-            Intent intent = new Intent(EditActivity.this, MainActivity.class );
+            Intent intent = new Intent(EditActivity.this, MainActivity.class);
             startActivity(intent);
         }
     }
@@ -138,9 +179,10 @@ public class EditActivity extends AppCompatActivity {
                 RestTemplate restTemplate = new RestTemplate();
                 name_habit = params[0];
                 question_habit = params[1];
-                final String url = "http://192.168.1.3:8080/updateHabit?id=" + id_habit + "&name=" + params[0] + "&question=" + params[1];
+                final String url = "http://" + MainActivity.ip + ":8080/updateHabit?id=" + id_habit + "&name=" + params[0] + "&question=" + params[1] + "&time=" + params[2];
                 restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -151,6 +193,57 @@ public class EditActivity extends AppCompatActivity {
         protected void onPostExecute(Void task) {
             name = findViewById(R.id.name);
             name.setText(name_habit);
+        }
+    }
+
+    private class UpdateTimeHabitTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://" + MainActivity.ip + ":8080/updateTimeHabit?id=" + id_habit + "&time=" + params[0];
+                restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void task) {
+            name = findViewById(R.id.name);
+            name.setText(name_habit);
+        }
+    }
+
+    private class MarksTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                final String url = "http://" + MainActivity.ip + ":8080/marksByHabit?id=" + id_habit;
+                ResponseEntity<List<Mark>> markResponse = restTemplate.exchange(url, HttpMethod.GET,
+                        null, new ParameterizedTypeReference<List<Mark>>() {
+                        });
+                marks = markResponse.getBody();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void task) {
+            calendarView = findViewById(R.id.calendarView);
+            calendarView.setSelectionColor(R.color.colorGreen);
+            for (Mark item: marks) {
+                calendarView.setDateSelected(item.getDate(), true);
+            }
+            calendarView.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
+
+
         }
     }
 }
