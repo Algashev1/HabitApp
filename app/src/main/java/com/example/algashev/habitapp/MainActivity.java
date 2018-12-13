@@ -106,12 +106,13 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("name_habit", item.getName());
                             intent.putExtra("question_habit", item.getQuestion());
                             intent.putExtra("time_habit", item.getTime());
+                            intent.putExtra("creationDate", item.getCreationDate());
                             startActivity(intent);
                         }
                     }
             );
 
-            initImages(viewHabit, item.getId());
+            initImages(viewHabit, item);
             allEds.add(viewHabit);
             linear.addView(viewHabit);
         }
@@ -134,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void initImages(View viewHabit, final int id) {
+    private void initImages(View viewHabit, final Habit item) {
         final ImageView[] images = {
                 viewHabit.findViewById(R.id.imageView1),
                 viewHabit.findViewById(R.id.imageView2),
@@ -149,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
             boolean flag = false;
             int idMark =  -1;
             for (int j = 0; j < marks.size(); j++) {
-                if (marks.get(j).getIdHabit() == id && marks.get(j).check(c)) {
+                if (marks.get(j).getIdHabit() == item.getId() && marks.get(j).check(c)) {
                     img.setImageResource(R.drawable.good);
                     flag = true;
                     idMark = marks.get(j).getId();
@@ -171,7 +172,9 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public boolean onLongClick(View v) {
                             if (!status) {
-                                new AddMarkTask().execute(id, finalI);
+                                if (item.check(date, finalI)) {
+                                    new AddMarkTask().execute(item.getId(), finalI);
+                                }
                             }
                             else {
                                 new DeleteMarkTask().execute(idMark);

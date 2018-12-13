@@ -22,6 +22,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.Serializable;
 import java.util.Calendar;
 import java.util.List;
 
@@ -29,11 +30,12 @@ public class EditActivity extends AppCompatActivity {
 
     int id_habit;
     String name_habit, question_habit, time_habit;
+    Calendar creationDate;
 
     List<Mark> marks;
 
     TextView name, time;
-    ImageView delete, edit;
+    ImageView delete, edit, info;
     MaterialCalendarView calendarView;
 
     @Override
@@ -46,6 +48,7 @@ public class EditActivity extends AppCompatActivity {
         name_habit = arguments.get("name_habit").toString();
         question_habit = arguments.get("question_habit").toString();
         time_habit = arguments.get("time_habit").toString();
+        creationDate = (Calendar) arguments.get("creationDate");
 
         name = findViewById(R.id.name);
         name.setText(name_habit);
@@ -113,6 +116,18 @@ public class EditActivity extends AppCompatActivity {
         });
 
         new MarksTask().execute();
+
+        info = findViewById(R.id.info);
+        info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(".InfoActivity");
+                intent.putExtra("id_habit", id_habit);
+                intent.putExtra("name_habit", name_habit);
+                intent.putExtra("creationDate", creationDate);
+                startActivity(intent);
+            }
+        });
 
         time = findViewById(R.id.time);
         time.setText(time_habit);
@@ -208,7 +223,7 @@ public class EditActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return null;
+             return null;
         }
 
         @Override

@@ -29,7 +29,7 @@
                 android:textSize="25sp" />
 
             <ImageView
-                android:id="@+id/chart"
+                android:id="@+id/info"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="0.1"
