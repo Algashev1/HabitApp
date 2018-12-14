@@ -1,11 +1,23 @@
 package com.example.algashev.habitapp;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
@@ -34,7 +46,9 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static String ip = "192.168.1.2";
+    public static String ip = "192.168.1.3";
+
+    public static String CHANNEL_ID = "1234";
 
     private List<View> allEds;
 
@@ -46,13 +60,14 @@ public class MainActivity extends AppCompatActivity {
 
     List<Mark> marks;
 
-    private String[] days = { "Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
+    private String[] days = {"Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"};
 
     private Calendar currentDate, date, newDate;
 
     private TextView[] texts, nums;
 
-    @SuppressLint("ClickableViewAccessibility")
+    private BootReceiver alarm;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,20 +83,20 @@ public class MainActivity extends AppCompatActivity {
         text3 = findViewById(R.id.text3);
         text4 = findViewById(R.id.text4);
         text5 = findViewById(R.id.text5);
-        texts = new TextView[]{ text1, text2, text3, text4, text5 };
+        texts = new TextView[]{text1, text2, text3, text4, text5};
 
         num1 = findViewById(R.id.num1);
         num2 = findViewById(R.id.num2);
         num3 = findViewById(R.id.num3);
         num4 = findViewById(R.id.num4);
         num5 = findViewById(R.id.num5);
-        nums = new TextView[]{ num1, num2, num3, num4, num5 };
+        nums = new TextView[]{num1, num2, num3, num4, num5};
 
         initDays();
         addHabit();
 
         final GestureDetector gdt = new GestureDetector(new GestureListener());
-        final LinearLayout layout  = findViewById(R.id.date);
+        final LinearLayout layout = findViewById(R.id.date);
         layout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(final View view, final MotionEvent event) {
@@ -93,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void init() {
         linear.removeAllViews();
-        for (final Habit item: habits) {
+        for (final Habit item : habits) {
             final View viewHabit = getLayoutInflater().inflate(R.layout.layoutcustom_edittext_layout, null);
             TextView name = viewHabit.findViewById(R.id.name);
             name.setText(item.getName());
@@ -116,6 +131,10 @@ public class MainActivity extends AppCompatActivity {
             allEds.add(viewHabit);
             linear.addView(viewHabit);
         }
+
+        alarm = new BootReceiver();
+        Context context = this.getApplicationContext();
+        alarm.setAlarm(context, habits.get(0));
     }
 
     private void initDays() {
@@ -144,11 +163,11 @@ public class MainActivity extends AppCompatActivity {
                 viewHabit.findViewById(R.id.imageView5)};
 
         int i = 0;
-        for (final ImageView img: images) {
-            Calendar c = (Calendar)date.clone();
+        for (final ImageView img : images) {
+            Calendar c = (Calendar) date.clone();
             c.add(Calendar.DATE, -i);
             boolean flag = false;
-            int idMark =  -1;
+            int idMark = -1;
             for (int j = 0; j < marks.size(); j++) {
                 if (marks.get(j).getIdHabit() == item.getId() && marks.get(j).check(c)) {
                     img.setImageResource(R.drawable.good);
@@ -169,14 +188,14 @@ public class MainActivity extends AppCompatActivity {
                     new View.OnLongClickListener() {
                         boolean status = finalFlag;
                         int idMark = finalIdMark;
+
                         @Override
                         public boolean onLongClick(View v) {
                             if (!status) {
                                 if (item.check(date, finalI)) {
                                     new AddMarkTask().execute(item.getId(), finalI);
                                 }
-                            }
-                            else {
+                            } else {
                                 new DeleteMarkTask().execute(idMark);
                             }
 
@@ -211,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
                 a_builder.setCancelable(false)
                         .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onClick (DialogInterface dialog, int which) {
+                            public void onClick(DialogInterface dialog, int which) {
                                 EditText newName = addView.findViewById(R.id.habitNewName);
                                 EditText newQuestion = addView.findViewById(R.id.habitNewQuestion);
                                 if (!newName.getText().toString().equals("")) {
@@ -236,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateDaysAdd() {
         date.add(Calendar.DATE, -1);
-        newDate = (Calendar)date.clone();
+        newDate = (Calendar) date.clone();
         for (int i = 0; i < nums.length; i++) {
             texts[i].setText(days[newDate.get(Calendar.DAY_OF_WEEK) - 1]);
             nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
@@ -248,14 +267,13 @@ public class MainActivity extends AppCompatActivity {
     private void updateDaysSub() {
         date.add(Calendar.DATE, 1);
         if (date.before(currentDate)) {
-            newDate = (Calendar)date.clone();
+            newDate = (Calendar) date.clone();
             for (int i = 0; i < nums.length; i++) {
                 texts[i].setText(days[newDate.get(Calendar.DAY_OF_WEEK) - 1]);
                 nums[i].setText(Integer.toString(newDate.get(Calendar.DAY_OF_MONTH)));
                 newDate.add(Calendar.DATE, -1);
             }
-        }
-        else {
+        } else {
             date.add(Calendar.DATE, -1);
         }
         new MarksTask().execute();
@@ -267,11 +285,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+            if (e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
 
                 updateDaysAdd();
                 return false;
-            }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+            } else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
                 updateDaysSub();
                 return false;
             }
@@ -302,7 +320,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     ///////////////////////////////////////////////////////////////////////////////////////////////
     private class HabitsTask extends AsyncTask<Void, Void, List<Habit>> {
         @Override
@@ -311,7 +328,8 @@ public class MainActivity extends AppCompatActivity {
                 RestTemplate restTemplate = new RestTemplate();
                 final String url = "http://" + ip + ":8080/habits";
                 ResponseEntity<List<Habit>> habitResponse = restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
                 habits = habitResponse.getBody();
                 return habits;
             } catch (Exception e) {
@@ -334,7 +352,8 @@ public class MainActivity extends AppCompatActivity {
                 final String url = "http://" + ip + ":8080/addHabit?name="
                         + params[0] + "&question=" + params[1];
                 restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -351,14 +370,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Integer... params) {
             try {
-                Calendar d = (Calendar)date.clone();
+                Calendar d = (Calendar) date.clone();
                 d.add(Calendar.DATE, -params[1]);
                 RestTemplate restTemplate = new RestTemplate();
                 final String url = "http://" + ip + ":8080/addMark?id="
                         + params[0] + "&year=" + d.get(Calendar.YEAR) + "&month=" + d.get(Calendar.MONTH)
                         + "&day=" + d.get(Calendar.DATE);
                 restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -379,7 +399,8 @@ public class MainActivity extends AppCompatActivity {
                 final String url = "http://" + ip + ":8080/marks?year=" + date.get(Calendar.YEAR) + "&month=" + date.get(Calendar.MONTH)
                         + "&day=" + date.get(Calendar.DATE);
                 ResponseEntity<List<Mark>> markResponse = restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Mark>>() {});
+                        null, new ParameterizedTypeReference<List<Mark>>() {
+                        });
                 marks = markResponse.getBody();
                 return marks;
             } catch (Exception e) {
@@ -401,7 +422,8 @@ public class MainActivity extends AppCompatActivity {
                 RestTemplate restTemplate = new RestTemplate();
                 final String url = "http://" + ip + ":8080/deleteMark?id=" + params[0];
                 restTemplate.exchange(url, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Habit>>() {});
+                        null, new ParameterizedTypeReference<List<Habit>>() {
+                        });
             } catch (Exception e) {
                 e.printStackTrace();
             }

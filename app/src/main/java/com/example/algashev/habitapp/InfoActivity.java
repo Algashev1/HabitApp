@@ -1,13 +1,12 @@
 package com.example.algashev.habitapp;
 
-import android.graphics.Typeface;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
 import com.example.algashev.habitapp.rest.Mark;
-import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -18,11 +17,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import lecho.lib.hellocharts.listener.PieChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.PieChartData;
 import lecho.lib.hellocharts.model.SliceValue;
 import lecho.lib.hellocharts.util.ChartUtils;
-import lecho.lib.hellocharts.view.Chart;
 import lecho.lib.hellocharts.view.PieChartView;
 
 public class InfoActivity extends AppCompatActivity {
@@ -33,7 +30,6 @@ public class InfoActivity extends AppCompatActivity {
     private boolean hasLabelsOutside = false;
     private boolean hasCenterCircle = true;
     private boolean hasCenterText1 = true;
-    private boolean hasCenterText2 = true;
     private boolean isExploded = false;
     private boolean hasLabelForSelected = false;
 
@@ -41,7 +37,7 @@ public class InfoActivity extends AppCompatActivity {
     String name_habit;
     Calendar creationDate;
 
-    TextView name;
+    TextView name, text1, text2;
 
     List<Mark> marks;
 
@@ -80,20 +76,18 @@ public class InfoActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void task) {
-            Calendar curentDate = Calendar.getInstance();
-            long a = curentDate.getTimeInMillis() - creationDate.getTimeInMillis();
+            Calendar currentDate = Calendar.getInstance();
+            long a = currentDate.getTimeInMillis() - creationDate.getTimeInMillis();
 
             long days = a / 1000 / 60 / 60 / 24 + 1;
 
             chart = findViewById(R.id.chart);
-            int numValues = 2;
             List<SliceValue> values = new ArrayList<>();
 
-            SliceValue sliceValue = new SliceValue((float) days-marks.size(), ChartUtils.pickColor());
-            values.add(sliceValue);
-            sliceValue = new SliceValue((float) marks.size(), ChartUtils.pickColor());
-            values.add(sliceValue);
-
+            SliceValue sliceValue1 = new SliceValue((float) days - marks.size(), Color.LTGRAY);
+            SliceValue sliceValue2 = new SliceValue((float) marks.size(),Color.GREEN);
+            values.add(sliceValue1);
+            values.add(sliceValue2);
             data = new PieChartData(values);
             data.setHasLabels(hasLabels);
             data.setHasLabelsOnlyForSelected(hasLabelForSelected);
@@ -101,7 +95,7 @@ public class InfoActivity extends AppCompatActivity {
             data.setHasCenterCircle(hasCenterCircle);
 
             if (isExploded) {
-                data.setSlicesSpacing(24);
+                data.setSlicesSpacing(20);
             }
 
             if (hasCenterText1) {
@@ -110,12 +104,11 @@ public class InfoActivity extends AppCompatActivity {
                         (int) getResources().getDimension(R.dimen.pie_chart_text1_size)));
             }
 
-//            if (hasCenterText2) {
-//                data.setCenterText2("Charts (Roboto Italic)");
-//                data.setCenterText2FontSize(ChartUtils.px2sp(getResources().getDisplayMetrics().scaledDensity,
-//                        (int) getResources().getDimension(R.dimen.pie_chart_text2_size)));
-//            }
 
+            text1 = findViewById(R.id.text1);
+            text1.setText(marks.size() + " выполнено");
+            text2 = findViewById(R.id.text2);
+            text2.setText(days - marks.size()+ " пропущено");
             chart.setPieChartData(data);
         }
     }

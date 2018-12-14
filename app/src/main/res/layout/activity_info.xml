@@ -40,10 +40,24 @@
 
         <lecho.lib.hellocharts.view.PieChartView
             android:id="@+id/chart"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="350dp" />
+        <TextView
+            android:id="@+id/text1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3 выполнено"
+            android:textAlignment="center"
+            android:textSize="25sp" />
+        <TextView
+            android:id="@+id/text2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="2 пропущено"
+            android:textAlignment="center"
+            android:textSize="25sp" />
 
     </LinearLayout>
 

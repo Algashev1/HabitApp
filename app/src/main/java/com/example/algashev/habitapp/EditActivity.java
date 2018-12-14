@@ -1,9 +1,12 @@
 package com.example.algashev.habitapp;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,7 +25,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.Serializable;
 import java.util.Calendar;
 import java.util.List;
 
@@ -252,10 +254,11 @@ public class EditActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void task) {
             calendarView = findViewById(R.id.calendarView);
-            calendarView.setSelectionColor(R.color.colorGreen);
+
             for (Mark item: marks) {
                 calendarView.setDateSelected(item.getDate(), true);
             }
+
             calendarView.setSelectionMode(MaterialCalendarView.SELECTION_MODE_MULTIPLE);
 
 
