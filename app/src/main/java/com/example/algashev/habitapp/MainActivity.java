@@ -1,23 +1,10 @@
 package com.example.algashev.habitapp;
 
-import android.annotation.SuppressLint;
-import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Color;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.GestureDetector;
@@ -46,9 +33,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static String ip = "192.168.1.3";
-
-    public static String CHANNEL_ID = "1234";
+    public static String ip = "192.168.1.6";
 
     private List<View> allEds;
 
@@ -65,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
     private Calendar currentDate, date, newDate;
 
     private TextView[] texts, nums;
-
-    private BootReceiver alarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,10 +114,6 @@ public class MainActivity extends AppCompatActivity {
             allEds.add(viewHabit);
             linear.addView(viewHabit);
         }
-
-        alarm = new BootReceiver();
-        Context context = this.getApplicationContext();
-        alarm.setAlarm(context, habits.get(0));
     }
 
     private void initDays() {

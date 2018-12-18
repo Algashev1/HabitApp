@@ -8,8 +8,6 @@ import android.content.ContextWrapper;
 import android.graphics.Color;
 import android.os.Build;
 
-import java.util.Calendar;
-
 public class NotificationUtils extends ContextWrapper {
 
     private NotificationManager mManager;

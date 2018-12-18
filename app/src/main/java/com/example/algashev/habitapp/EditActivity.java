@@ -1,18 +1,22 @@
 package com.example.algashev.habitapp;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
@@ -39,6 +43,9 @@ public class EditActivity extends AppCompatActivity {
     TextView name, time;
     ImageView delete, edit, info;
     MaterialCalendarView calendarView;
+    Switch switch_habit;
+
+    private BootReceiver alarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +148,49 @@ public class EditActivity extends AppCompatActivity {
                     }
                 }
         );
+
+
+        switch_habit = findViewById(R.id.switch1);
+        switch_habit.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    SQLiteDatabase db;
+                    DBHelper dbHelper = new DBHelper(EditActivity.this, DBHelper.TABLE_NAME, null, 2);
+                    try {
+                        db = dbHelper.getWritableDatabase();
+
+                        Cursor cursor = db.query(DBHelper.TABLE_NAME, null, DBHelper.ID + "=" + id_habit,
+                                null, null, null, null, null);
+
+                        if (cursor.getCount() < 0) {
+                            ContentValues newValues = new ContentValues();
+                            newValues.put(DBHelper.ID, id_habit);
+                            newValues.put(DBHelper.DAYS, "1,2,3,4,5,6,7");
+                            newValues.put(DBHelper.STATUS, 1);
+                            db.insert(DBHelper.TABLE_NAME, null, newValues);
+                        }
+                        else {
+                            ContentValues newValues = new ContentValues();
+                            newValues.put(DBHelper.DAYS, "1,2,3,4,5,6,7");
+                            newValues.put(DBHelper.STATUS, 1);
+                            String where = DBHelper.ID + "=" + id_habit;
+                            db.update(DBHelper.TABLE_NAME, newValues, where, null);
+                        }
+                        alarm = new BootReceiver();
+                        Context context = EditActivity.this.getApplicationContext();
+                        alarm.setAlarm(context, String.valueOf(id_habit), name_habit, question_habit, time_habit, Calendar.getInstance());
+                    }
+                    catch (SQLiteException ex){
+                        db = dbHelper.getReadableDatabase();
+                    }
+                }
+                else {
+                    Context context = EditActivity.this.getApplicationContext();
+                    alarm.cancelAlarm(context);
+                }
+            }
+        });
     }
 
     private void callTimePicker() {
@@ -154,9 +204,10 @@ public class EditActivity extends AppCompatActivity {
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                         String editTextTimeParam = hourOfDay + ":" + minute;
                         time.setText(editTextTimeParam);
+                        time_habit = editTextTimeParam;
                         new UpdateTimeHabitTask().execute(editTextTimeParam);
                     }
-                }, mHour, mMinute, false);
+                }, mHour, mMinute, true);
         timePickerDialog.show();
     }
 
@@ -184,6 +235,23 @@ public class EditActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void task) {
+            SQLiteDatabase db;
+            DBHelper dbHelper = new DBHelper(EditActivity.this, DBHelper.TABLE_NAME, null, 2);
+            try {
+                db = dbHelper.getWritableDatabase();
+
+                Cursor cursor = db.query(DBHelper.TABLE_NAME, null, DBHelper.ID + "=" + id_habit,
+                        null, null, null, null, null);
+
+                if (cursor.getCount() < 0) {
+                    db.delete(DBHelper.TABLE_NAME, DBHelper.ID + "=" + id_habit, null);
+                }
+            }
+            catch (SQLiteException ex){
+                db = dbHelper.getReadableDatabase();
+            }
+
+
             Intent intent = new Intent(EditActivity.this, MainActivity.class);
             startActivity(intent);
         }
